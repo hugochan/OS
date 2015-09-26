@@ -1,0 +1,7 @@
+# example simulator input file
+#
+# <proc-num>|<burst-time>|<num-burst>|<io-time>
+1|168|5|287
+2|385|1|0
+4|97|5|2499
+3|1770|2|822
