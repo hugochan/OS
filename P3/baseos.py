@@ -70,13 +70,13 @@ class BaseOS(object):
 
         while len(process_table):
             self.proc_srt_loop(process_table, process_queue, memory_pool, placement_algo)
-        print "time %sms: Simulator for SRT ended"%(int(1000*(time.time()-self.t0)) + self.t_pseudo_elapsed)
+        print "time %sms: Simulator for SRT and %s ended"%(int(1000*(time.time()-self.t0)) + self.t_pseudo_elapsed, placement_algo)
         # stat
         burst_num = 0
         for val in self.process_table.values():
             avg_burst_time += (val['burst_time']*val['num_burst'])
             burst_num += val['num_burst']
-        self.avg_turnaround_time = (self.avg_wait_time + self.t_cs*self.switch_count + avg_burst_time)/burst_num
+        self.avg_turnaround_time = (self.avg_wait_time + self.t_cs*self.switch_count + avg_burst_time + self.t_pseudo_elapsed)/burst_num
         avg_burst_time /= burst_num
         self.avg_wait_time /= burst_num
         print "Algorithm SRT %s"%placement_algo
@@ -100,18 +100,19 @@ class BaseOS(object):
 
         while len(process_table):
             self.proc_rr_loop(process_table, process_queue, memory_pool, placement_algo)
-        print "time %sms: Simulator for RR and %sended"%(int(1000*(time.time()-self.t0)) + self.t_pseudo_elapsed, placement_algo)
+        print "time %sms: Simulator for RR and %s ended"%(int(1000*(time.time()-self.t0)) + self.t_pseudo_elapsed, placement_algo)
         # stat
         burst_num = 0
         for val in self.process_table.values():
             avg_burst_time += (val['burst_time']*val['num_burst'])
             burst_num += val['num_burst']
+        self.avg_turnaround_time = (self.avg_wait_time + self.t_cs*self.switch_count + avg_burst_time + self.t_pseudo_elapsed)/burst_num
         avg_burst_time /= burst_num
         self.avg_wait_time /= burst_num
         print "Algorithm RR and %s"%placement_algo
         print "-- average CPU burst time: %.2f ms"%avg_burst_time
         print "-- average wait time: %.2f ms"%self.avg_wait_time
-        print "-- average turnaround time: %.2f ms"%(self.avg_wait_time + avg_burst_time + self.t_cs)
+        print "-- average turnaround time: %.2f ms"%self.avg_turnaround_time
         print "-- total number of context switches: %s"%self.switch_count
 
     def proc_srt_loop(self, process_table, process_queue, memory_pool, placement_algo, current_process=None):
@@ -210,7 +211,7 @@ class BaseOS(object):
                     process_table[current_process]['status'] = 0 # ready to use the CPU
                     process_table[current_process]['start_time'] = int(1000*(time.time()-self.t0))
                     process_table[current_process]['num_burst'] -= 1
-                    print "time %sms: Process '%s' completed its CPU burst [Q "%(int(1000*(time.time()-self.t0)), current_process) + ("%s"%list(process_queue))[1:]
+                    print "time %sms: Process '%s' completed its CPU burst [Q "%(int(1000*(time.time()-self.t0)) + self.t_pseudo_elapsed, current_process) + ("%s"%list(process_queue))[1:]
                     process_queue.insert(current_process)
 
     def poll_io_srt(self, process_table, process_queue, current_process=None):
@@ -424,8 +425,9 @@ if __name__ == '__main__':
     try:
         in_file = sys.argv[1]
     except:
-        print "ERROR: please input the filename"
-        exit()
+        in_file = 'processes.txt'
+        # print "ERROR: please input the filename"
+        # exit()
     bos.load_process(in_file)
     bos.run_proc('SRT', 'FirstFit')
     print '\n'
